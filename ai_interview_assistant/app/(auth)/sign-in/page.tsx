@@ -1,11 +1,10 @@
 import React from "react";
 
-const page = () => {
-  return (
-    <div>
-      <h1>Sign In</h1>
-    </div>
-  );
+// COMPONENTS
+import AuthForm from "@/components/auth/AuthForm";
+
+const Page = () => {
+  return <AuthForm type="sign-in" />;
 };
 
-export default page;
+export default Page;
