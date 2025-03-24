@@ -38,7 +38,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     try {
-      if (type === "sign-in") {
+      if (type === "sign-up") {
         console.log("Sign up", values);
         toast.success("Account created successfully, please sign in");
         router.push("/sign-in");
@@ -60,7 +60,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
       <div className="flex flex-col gap-6 card py-14 px-10">
         <div className="flex flex-row gap-2 justify-center">
           <Image src="/logo.svg" alt="logo" height={32} width={38} />
-          <h2 className="text-primary-100">PrepWise</h2>
+          <h2 className="text-primary-100">Ask Guru</h2>
         </div>
         <h3 className="self-center">Practice job interviews with AI</h3>
 
@@ -69,12 +69,15 @@ const AuthForm = ({ type }: { type: FormType }) => {
             onSubmit={form.handleSubmit(onSubmit)}
             className="w-full space-y-6 mt-4 form"
           >
-            <FormField
-              control={form.control}
-              name="name"
-              label="Name"
-              placeholder="Enter your name"
-            />
+            {!isSignIn && (
+              <FormField
+                control={form.control}
+                name="name"
+                label="Name"
+                placeholder="Your Name"
+                type="text"
+              />
+            )}
             <FormField
               control={form.control}
               name="email"
