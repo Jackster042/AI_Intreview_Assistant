@@ -1,8 +1,16 @@
 import React from "react";
 import Link from "next/link";
-import { Toaster } from "sonner";
 import Image from "next/image";
-const RootLayout = ({ children }: { children: React.ReactNode }) => {
+import { isAuthenticated } from "@/lib/actions/auth.action";
+import { redirect } from "next/navigation";
+
+const RootLayout = async ({ children }: { children: React.ReactNode }) => {
+  const isUserAuthenticated = await isAuthenticated();
+
+  if (!isUserAuthenticated) {
+    redirect("/sign-in");
+  }
+
   return (
     <div className="root-layout">
       <nav>
@@ -12,7 +20,6 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
         </Link>
       </nav>
       {children}
-      <Toaster />
     </div>
   );
 };
