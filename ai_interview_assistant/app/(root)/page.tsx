@@ -3,7 +3,6 @@ import React from "react";
 import Image from "next/image";
 // COMPONENTS
 import { Button } from "@/components/ui/button";
-import { dummyInterviews } from "@/constants";
 import InterviewCard from "@/components/shared/InterviewCard";
 import {
   getInterviewsByUserId,
