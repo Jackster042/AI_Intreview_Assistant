@@ -115,6 +115,39 @@ export async function getCurrentUser(): Promise<User | null> {
   }
 }
 
+export async function getInterviewsByUserId(
+  userId: string
+): Promise<Interview[] | null> {
+  const interviews = await db
+    .collection("interviews")
+    .where("userId", "==", userId)
+    .orderBy("createdAt", "desc")
+    .get();
+
+  console.log(interviews, "interviews from getUserId");
+
+  return interviews.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as Interview[]; //TODO WHY AS INTERVIEW[]
+}
+
+export async function getLatestInterviews(params: GetLatestInterviewsParams) {
+  const { userId, limit = 20 } = params;
+  const interviews = await db
+    .collection("interviews")
+    .orderBy("createdAt", "desc")
+    .where("finalized", "==", true)
+    .where("userId", "!=", userId)
+    .limit(limit)
+    .get();
+
+  return interviews.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as Interview[];
+}
+
 export async function signOut() {
   const cookieStore = await cookies();
   cookieStore.delete("session");
