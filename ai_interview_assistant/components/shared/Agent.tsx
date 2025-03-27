@@ -18,7 +18,13 @@ interface SavedMessage {
   content: string;
 }
 
-const Agent = ({ userName, userId, type }: AgentProps) => {
+const Agent = ({
+  userName,
+  userId,
+  type,
+  questions,
+  interviewId,
+}: AgentProps) => {
   const router = useRouter();
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
@@ -29,12 +35,32 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
   const handleCall = async () => {
     setCallStatus(CallStatus.CONNECTING);
 
-    await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
-      variableValues: {
-        username: userName,
-        userid: userId,
-      },
-    });
+    if(type === "generate") {
+
+      await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
+        variableValues: {
+          username: userName,
+          userid: userId,
+        },
+      });
+    } else {
+         let formattedQuestions = ""
+         if(questions && questions.length > 0) {
+          formattedQuestions = questions
+          .map((question) => `- ${question}`)
+          .join("\n");
+        }
+
+        await vapi.start("INTERVIEWER", {
+          variableValues: {
+            questions: formattedQuestions,
+            username: userName,
+            userid: userId,
+
+          }
+        })
+      }
+    }
   };
 
   const handleDisconnect = () => {
@@ -44,6 +70,22 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
 
   const isCallInactiveOrFinished =
     callStatus === CallStatus.INACTIVE || callStatus === CallStatus.FINISHED;
+
+  const handleGenerateFeedback = async (messages: SavedMessage[]) => {
+    console.log("Generate feedback here");
+
+    const { success, id } = {
+      success: true,
+      id: "feedback-id",
+    };
+
+    if (success && id) {
+      router.push(`/interview/${interviewId}/feedback`);
+    } else {
+      console.error("Failed to generate feedback");
+      router.push("/");
+    }
+  };
 
   useEffect(() => {
     const onCallStart = () => setCallStatus(CallStatus.ACTIVE);
@@ -84,7 +126,13 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
   }, []);
 
   useEffect(() => {
-    if (callStatus === CallStatus.FINISHED) router.push("/");
+    if (callStatus === CallStatus.FINISHED) {
+      if (type === "generate") {
+        router.push("/");
+      } else {
+        handleGenerateFeedback(messages);
+      }
+    }
   }, [messages, callStatus, userId, type]);
 
   return (
