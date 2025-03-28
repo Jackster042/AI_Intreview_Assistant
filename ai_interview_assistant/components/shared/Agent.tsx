@@ -5,6 +5,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { vapi } from "@/lib/actions/vapi.sdk";
+import { interviewer } from "@/constants";
 
 enum CallStatus {
   CONNECTING = "CONNECTING",
@@ -35,8 +36,7 @@ const Agent = ({
   const handleCall = async () => {
     setCallStatus(CallStatus.CONNECTING);
 
-    if(type === "generate") {
-
+    if (type === "generate") {
       await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
         variableValues: {
           username: userName,
@@ -44,22 +44,20 @@ const Agent = ({
         },
       });
     } else {
-         let formattedQuestions = ""
-         if(questions && questions.length > 0) {
-          formattedQuestions = questions
+      let formattedQuestions = "";
+      if (questions && questions.length > 0) {
+        formattedQuestions = questions
           .map((question) => `- ${question}`)
           .join("\n");
-        }
-
-        await vapi.start("INTERVIEWER", {
-          variableValues: {
-            questions: formattedQuestions,
-            username: userName,
-            userid: userId,
-
-          }
-        })
       }
+
+      await vapi.start(interviewer, {
+        variableValues: {
+          questions: formattedQuestions,
+          username: userName,
+          userid: userId,
+        },
+      });
     }
   };
 
