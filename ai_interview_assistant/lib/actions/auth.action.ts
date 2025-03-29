@@ -122,6 +122,6 @@ export async function signOut() {
 
 export async function isAuthenticated() {
   const user = await getCurrentUser();
-  console.log(user, "user from GET CURRENT USER");
+  // console.log(user, "user from GET CURRENT USER");
   return !!user;
 }

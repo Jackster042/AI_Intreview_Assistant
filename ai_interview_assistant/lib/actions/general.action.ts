@@ -1,3 +1,5 @@
+"use server";
+
 import { feedbackSchema } from "@/constants";
 import { db } from "@/firebase/admin";
 import { google } from "@ai-sdk/google";
@@ -12,7 +14,7 @@ export async function getInterviewsByUserId(
     .orderBy("createdAt", "desc")
     .get();
 
-  console.log(interviews, "interviews from getUserId");
+  // console.log(interviews, "interviews from getUserId");
 
   return interviews.docs.map((doc) => ({
     id: doc.id,
@@ -39,13 +41,13 @@ export async function getLatestInterviews(params: GetLatestInterviewsParams) {
 export async function getInterviewById(id: string): Promise<Interviews | null> {
   const interview = await db.collection("interviews").doc(id).get();
 
-  console.log(interview.data(), "interview from getInterviewById");
+  // console.log(interview.data(), "interview from getInterviewById");
 
   return interview.data() as Interviews | null; //TODO WHY AS INTERVIEW[]
 }
 
 export async function createFeedback(params: CreateFeedbackParams) {
-  const { interviewId, transcript, userId, feedbackId } = params;
+  const { interviewId, transcript, userId } = params;
 
   try {
     const formattedTranscript = transcript
@@ -55,8 +57,15 @@ export async function createFeedback(params: CreateFeedbackParams) {
       )
       .join("");
 
-    const { object } = await generateObject({
-      // TODO : CHECK WHERE DOES THIS FN COMES FROM
+    const {
+      object: {
+        totalScore,
+        categoryScores,
+        strengths,
+        areasForImprovement,
+        finalAssessment,
+      },
+    } = await generateObject({
       model: google("gemini-2.0-flash-001", {
         structuredOutputs: false,
       }),
@@ -77,32 +86,48 @@ export async function createFeedback(params: CreateFeedbackParams) {
         "You are a professional interviewer analyzing a mock interview. Your task is to evaluate the candidate based on structured categories",
     });
 
-    const feedback = {
+    const feedback = await db.collection("feedback").add({
       interviewId,
       userId,
-      totalScore: object.totalScore,
-      categoryScores: object.categoryScores,
-      strengths: object.strengths,
-      areasForImprovement: object.areasForImprovement,
-      finalAssessment: object.finalAssessment,
+      totalScore,
+      categoryScores,
+      strengths,
+      areasForImprovement,
+      finalAssessment,
       createdAt: new Date().toISOString(),
-    };
+    });
 
-    let feedbackRef;
-
-    if (feedbackId) {
-      feedbackRef = db.collection("feedback").doc(feedbackId);
-    } else {
-      feedbackRef = db.collection("feedback").doc();
+    // console.log(feedback, "feedback from CREATE FEEDBACK");
+    if (!feedback) {
+      throw new Error("Failed to create feedback");
     }
-
-    await feedbackRef.set(feedback);
 
     return {
       success: true,
-      feedbackId: feedbackRef.id,
+      feedbackId: feedback.id,
     };
   } catch (error) {
     console.error(error, "error in createFeedback");
+    return {
+      success: false,
+    };
   }
+}
+
+export async function getFeedbackByInterviewId(
+  params: GetFeedbackByInterviewIdParams
+): Promise<Feedback | null> {
+  const { interviewId, userId } = params;
+
+  const feedback = await db
+    .collection("feedback")
+    .where("interviewId", "==", interviewId)
+    .where("userId", "==", userId)
+    .limit(1)
+    .get();
+
+  if (feedback.empty) return null;
+
+  const feedbackDoc = feedback.docs[0];
+  return { id: feedbackDoc.id, ...feedbackDoc.data() } as Feedback;
 }
