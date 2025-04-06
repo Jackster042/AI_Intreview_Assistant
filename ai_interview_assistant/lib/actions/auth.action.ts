@@ -3,7 +3,7 @@
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db, auth } from "@/firebase/admin";
 import { cookies } from "next/headers";
-
+import { redirect } from "next/navigation";
 const ONE_WEEK = 60 * 60 * 24 * 7;
 
 export async function signUp(params: SignUpParams) {
@@ -118,6 +118,8 @@ export async function getCurrentUser(): Promise<User | null> {
 export async function signOut() {
   const cookieStore = await cookies();
   cookieStore.delete("session");
+
+  redirect("/sign-in");
 }
 
 export async function isAuthenticated() {

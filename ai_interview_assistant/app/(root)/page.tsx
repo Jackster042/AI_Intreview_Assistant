@@ -9,6 +9,7 @@ import {
   getLatestInterviews,
 } from "@/lib/actions/general.action";
 import { getCurrentUser } from "@/lib/actions/auth.action";
+import Footer from "@/components/shared/Footer";
 const page = async () => {
   const user = await getCurrentUser();
 
@@ -72,6 +73,8 @@ const page = async () => {
           )}
         </div>
       </section>
+
+      {/* <Footer /> */}
     </>
   );
 };
